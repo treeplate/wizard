@@ -1,0 +1,4 @@
+1000 1000 Jump on enemies to squish them
+700 0 50 50 enemy
+800 0 50 50 enemy
+900 0 100 150 goto=level3.lvl
