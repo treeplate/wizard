@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'file_stub.dart' if (dart.library.io) 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -28,7 +28,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int jumpVel = 20;
   int speed = 5;
   Map<String, Set<Object>> teleportedObjects = {};
-  bool readTas = true;
+  bool readTas = false;
   bool writeTas = false;
   List<String>? tas;
   int startingMXVel = 0;
