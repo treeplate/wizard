@@ -27,7 +27,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   Object? player;
   int jumpVel = 20;
   int speed = 5;
-  Map<String, Set<Object>> teleportedObjects = {};
+  Map<String, Set<Object>> teleportedObjects = {
+    'level1.lvl': {
+      Object.xywh(0, 0, 50, 50, tags: {'player'}),
+    },
+  };
   bool readTas = true;
   bool writeTas = false;
   List<String>? tas;
@@ -35,6 +39,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int startingBXVel = 0;
   int startingMYVel = 0;
   int startingBYVel = 0;
+  bool startingLeftPressed = false;
+  bool startingRightPressed = false;
   int tick = 0;
   List<int> times = [];
   bool end = false;
@@ -48,7 +54,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       setState(() {
         world = World.parse(file);
         this.file = file;
-        player = world!.objects.singleWhere((e) => e.tags.contains('player'));
+        player = teleportedObjects['level1.lvl']!.single;
       });
     });
     if (readTas) {
@@ -128,11 +134,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           a.y++;
           for (String tag in b.tags.where((e) => e.startsWith('goto='))) {
             String nextLevel = tag.substring(5);
-            if (nextLevel == 'end') {
-              end = true;
-              times.add(tick);
-              return;
-            }
             (teleportedObjects[nextLevel] ??= {}).add(a);
             a.x = 0;
             a.y = 0;
@@ -154,6 +155,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           result.files.first.path!,
                         ).writeAsStringSync(tas!.join('\n'));
                       }
+                      if (nextLevel == 'end') {
+                        end = true;
+                        times.add(tick);
+                        return;
+                      }
 
                       tas = [];
                       if (readTas) {
@@ -172,6 +178,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       }
                     });
               } else {
+                if (nextLevel == 'end') {
+                  end = true;
+                  times.add(tick);
+                  return;
+                }
                 tas = [];
                 if (readTas) {
                   rootBundle
@@ -188,12 +199,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       });
                 }
               }
+              if (nextLevel == 'end') {
+                end = true;
+                times.add(tick);
+                return;
+              }
               times.add(tick);
               tick = 0;
               startingBXVel = player!.baseXvel;
               startingBYVel = player!.baseYvel;
               startingMXVel = player!.moveXvel;
               startingMYVel = player!.moveYvel;
+              startingLeftPressed = leftPressed;
+              startingRightPressed = rightPressed;
               rootBundle.loadString('levels/$nextLevel').then((
                 final String file,
               ) {
@@ -346,8 +364,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     player!.y = 0;
     player!.height = 50;
     player!.tags.add('player');
-    world!.objects.removeWhere((e) => e.tags.contains('player'));
-    (teleportedObjects[filename] ??= {}).add(player!);
+    (teleportedObjects[filename] = {}).add(player!);
   }
 
   FocusNode textField1FocusNode = FocusNode();
@@ -367,9 +384,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 'Total time: ${Duration(milliseconds: 1000 ~/ 60) * times.reduce((a, b) => a + b)}',
               ),
               ...times.map((e) {
-                return Text(
-                '- ${Duration(milliseconds: 1000~/60) * e}',
-              );
+                return Text('- ${Duration(milliseconds: 1000 ~/ 60) * e}');
               }),
             ],
           ),
@@ -450,18 +465,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           ),
                           OutlinedButton(
                             onPressed: () {
-                              int? goal = int.tryParse(
-                                textEditingController.text,
-                              );
-                              if (goal == null) return;
-                              if (goal < tick) {
-                                restart();
-                                player!.moveXvel = startingMXVel;
-                                player!.moveYvel = startingMYVel;
-                                player!.baseXvel = startingBXVel;
-                                player!.baseYvel = startingBYVel;
-                              }
-                              tickTo(goal);
+                              setState(() {
+                                int? goal = int.tryParse(
+                                  textEditingController.text,
+                                );
+                                if (goal == null) return;
+                                if (goal < tick) {
+                                  restart();
+                                  player!.moveXvel = startingMXVel;
+                                  player!.moveYvel = startingMYVel;
+                                  player!.baseXvel = startingBXVel;
+                                  player!.baseYvel = startingBYVel;
+                                  leftPressed = startingLeftPressed;
+                                  rightPressed = startingRightPressed;
+                                }
+                                tickTo(goal);
+                              });
                             },
                             child: Text('Go to tick'),
                           ),
