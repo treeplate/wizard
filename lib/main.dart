@@ -28,7 +28,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int jumpVel = 20;
   int speed = 5;
   Map<String, Set<Object>> teleportedObjects = {};
-  bool readTas = false;
+  bool readTas = true;
   bool writeTas = false;
   List<String>? tas;
   int startingMXVel = 0;
@@ -36,6 +36,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int startingMYVel = 0;
   int startingBYVel = 0;
   int tick = 0;
+  List<int> times = [];
+  bool end = false;
 
   @override
   void initState() {
@@ -66,6 +68,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void doTick(Duration duration) {
+    if (end) return;
     setState(() {
       if (readTas && tas == null) {
         return;
@@ -125,6 +128,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           a.y++;
           for (String tag in b.tags.where((e) => e.startsWith('goto='))) {
             String nextLevel = tag.substring(5);
+            if (nextLevel == 'end') {
+              end = true;
+              times.add(tick);
+              return;
+            }
             (teleportedObjects[nextLevel] ??= {}).add(a);
             a.x = 0;
             a.y = 0;
@@ -180,6 +188,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       });
                 }
               }
+              times.add(tick);
               tick = 0;
               startingBXVel = player!.baseXvel;
               startingBYVel = player!.baseYvel;
@@ -347,6 +356,26 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    if (end) {
+      return Scaffold(
+        appBar: AppBar(title: Text('You Win!')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Total time: ${Duration(milliseconds: 1000 ~/ 60) * times.reduce((a, b) => a + b)}',
+              ),
+              ...times.map((e) {
+                return Text(
+                '- ${Duration(milliseconds: 1000~/60) * e}',
+              );
+              }),
+            ],
+          ),
+        ),
+      );
+    }
     if (world == null) {
       return CircularProgressIndicator();
     }
@@ -354,7 +383,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       autofocus: true,
       onKeyEvent: onKeyEvent,
       child: Scaffold(
-        appBar: AppBar(title: Text(world!.name)),
+        appBar: AppBar(
+          title: Text(world!.name),
+          bottom: PreferredSize(
+            preferredSize: Size.zero,
+            child: Text('${Duration(milliseconds: 1000 ~/ 60) * tick}'),
+          ),
+        ),
         body: Center(
           child: Row(
             children: [
