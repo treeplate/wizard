@@ -32,7 +32,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       Object.xywh(0, 0, 50, 50, tags: {'player'}),
     },
   };
-  bool readTas = true;
+  bool readTas = false;
   bool writeTas = false;
   List<String>? tas;
   int startingMXVel = 0;
@@ -97,7 +97,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   leftDown();
                 }
               case 'j':
-                jump();
+                jumpDown();
               case '1':
                 fire();
               case 'R':
@@ -248,11 +248,23 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         fire();
         return KeyEventResult.handled;
       }
+      if (event.logicalKey == LogicalKeyboardKey.digit2) {
+        if (world!.gravity == 0) {
+          world!.gravity = 1;
+        } else {
+          world!.gravity = 0;
+        }
+        return KeyEventResult.handled;
+      }
       switch (event.physicalKey) {
         case PhysicalKeyboardKey.keyW:
         case PhysicalKeyboardKey.space:
         case PhysicalKeyboardKey.arrowUp:
-          jump();
+          jumpDown();
+          return KeyEventResult.handled;
+        case PhysicalKeyboardKey.keyS:
+        case PhysicalKeyboardKey.arrowDown:
+          downDown();
           return KeyEventResult.handled;
         case PhysicalKeyboardKey.keyD:
         case PhysicalKeyboardKey.arrowRight:
@@ -269,6 +281,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         case PhysicalKeyboardKey.keyW:
         case PhysicalKeyboardKey.space:
         case PhysicalKeyboardKey.arrowUp:
+          jumpUp();
+          return KeyEventResult.handled;
+        case PhysicalKeyboardKey.keyS:
+        case PhysicalKeyboardKey.arrowDown:
+          downUp();
           return KeyEventResult.handled;
         case PhysicalKeyboardKey.keyD:
         case PhysicalKeyboardKey.arrowRight:
@@ -286,6 +303,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   bool leftPressed = false;
   bool rightPressed = false;
+  bool jumpPressed = false;
+  bool downPressed = false;
   bool jumped = false;
 
   void leftUp() {
@@ -307,6 +326,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         player!.moveXvel = 0;
       }
       rightPressed = false;
+    }
+  }
+
+  void jumpUp() {
+    if (world!.gravity != 0) return;
+    if (jumpPressed) {
+      if (downPressed) {
+        player!.moveYvel = -speed;
+      } else {
+        player!.moveYvel = 0;
+      }
+      jumpPressed = false;
+    }
+  }
+
+  void downUp() {
+    if (world!.gravity != 0) return;
+    if (downPressed) {
+      if (jumpPressed) {
+        player!.moveYvel = speed;
+      } else {
+        player!.moveYvel = 0;
+      }
+      downPressed = false;
     }
   }
 
@@ -332,14 +375,37 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     }
   }
 
-  void jump() {
-    if (!jumped) {
-      player!.y--;
-      if (world!.colliders(player!).isNotEmpty) {
-        player!.baseYvel += jumpVel;
+  void jumpDown() {
+    if (world!.gravity == 0) {
+      if (!jumpPressed) {
+        if (!downPressed) {
+          player!.moveYvel = speed;
+        } else {
+          player!.moveYvel = 0;
+        }
+        jumpPressed = true;
       }
-      player!.y++;
-      jumped = true;
+    } else {
+      if (!jumped) {
+        player!.y--;
+        if (world!.colliders(player!).isNotEmpty) {
+          player!.baseYvel += jumpVel;
+        }
+        player!.y++;
+        jumped = true;
+      }
+    }
+  }
+
+  void downDown() {
+    if (world!.gravity != 0) return;
+    if (!downPressed) {
+      if (!jumpPressed) {
+        player!.moveYvel = -speed;
+      } else {
+        player!.moveYvel = 0;
+      }
+      downPressed = true;
     }
   }
 
