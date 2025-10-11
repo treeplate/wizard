@@ -29,8 +29,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int speed = 5;
   Map<String, Set<Object>> teleportedObjects = {};
   bool readTas = true;
-  bool writeTas = true;
+  bool writeTas = false;
   List<String>? tas;
+  int startingMXVel = 0;
+  int startingBXVel = 0;
+  int startingMYVel = 0;
+  int startingBYVel = 0;
   int tick = 0;
 
   @override
@@ -128,6 +132,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               player!.height = 50;
               player!.tags.add('player');
               world = null;
+              filename = nextLevel;
               if (writeTas) {
                 FilePickerMacOS()
                     .pickFiles(
@@ -141,26 +146,45 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           result.files.first.path!,
                         ).writeAsStringSync(tas!.join('\n'));
                       }
-                    });
-              }
-              tick = 0;
-              filename = nextLevel;
-              if (readTas) {
-                rootBundle
-                    .loadString('tas/$filename.tas')
-                    .then((final String file) {
-                      tas = file.split('\n');
-                    })
-                    .onError((e, st) {
-                      if (writeTas) {
-                        tas = [];
-                      } else {
-                        throw e!;
+
+                      tas = [];
+                      if (readTas) {
+                        rootBundle
+                            .loadString('tas/$filename.tas')
+                            .then((final String file) {
+                              tas = file.split('\n');
+                            })
+                            .onError((e, st) {
+                              if (writeTas) {
+                                tas = [];
+                              } else {
+                                throw e!;
+                              }
+                            });
                       }
                     });
-              } else if (writeTas) {
+              } else {
                 tas = [];
+                if (readTas) {
+                  rootBundle
+                      .loadString('tas/$filename.tas')
+                      .then((final String file) {
+                        tas = file.split('\n');
+                      })
+                      .onError((e, st) {
+                        if (writeTas) {
+                          tas = [];
+                        } else {
+                          throw e!;
+                        }
+                      });
+                }
               }
+              tick = 0;
+              startingBXVel = player!.baseXvel;
+              startingBYVel = player!.baseYvel;
+              startingMXVel = player!.moveXvel;
+              startingMYVel = player!.moveYvel;
               rootBundle.loadString('levels/$nextLevel').then((
                 final String file,
               ) {
@@ -397,10 +421,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               if (goal == null) return;
                               if (goal < tick) {
                                 restart();
-                                player!.moveXvel = 0;
-                                player!.moveYvel = 0;
-                                player!.baseXvel = 0;
-                                player!.baseYvel = 0;
+                                player!.moveXvel = startingMXVel;
+                                player!.moveYvel = startingMYVel;
+                                player!.baseXvel = startingBXVel;
+                                player!.baseYvel = startingBYVel;
                               }
                               tickTo(goal);
                             },
