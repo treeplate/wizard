@@ -33,7 +33,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       Object.xywh(0, 0, 50, 50, tags: {'player'}),
     },
   };
-  bool readTas = false;
+  bool? readTas;
   bool writeTas = false;
   List<String>? tas;
   int startingMXVel = 0;
@@ -50,7 +50,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     ticker = createTicker(doTick);
-    if (!writeTas) ticker.start();
     rootBundle.loadString('levels/level1.lvl').then((final String file) {
       setState(() {
         world = World.parse(file);
@@ -58,7 +57,11 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         player = teleportedObjects['level1.lvl']!.single;
       });
     });
-    if (readTas) {
+  }
+
+  void start() {
+    if (!writeTas) ticker.start();
+    if (readTas!) {
       rootBundle.loadString('tas/$filename.tas').then((final String file) {
         tas = file.split('\n');
       });
@@ -68,7 +71,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void tickTo(int goal) {
-    assert(!readTas || tas != null);
+    assert(!readTas! || tas != null);
     while (tick < goal) {
       doTick(Duration(milliseconds: 1000 ~/ 60));
     }
@@ -77,7 +80,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   void doTick(Duration duration) {
     if (end) return;
     setState(() {
-      if (readTas && tas == null) {
+      if (readTas! && tas == null) {
         return;
       }
       if (tas != null) {
@@ -98,7 +101,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   leftDown();
                 }
               case 'j':
-                jumpDown();
+                if (jumpPressed && player!.tags.contains('float')) {
+                  jumpUp();
+                } else {
+                  jumpDown();
+                }
+              case 'd':
+                if (downPressed && player!.tags.contains('float')) {
+                  downUp();
+                } else {
+                  downDown();
+                }
               case '1':
                 fire();
               case '2':
@@ -164,7 +177,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               world = null;
               filename = nextLevel;
               if (writeTas) {
-                FilePickerMacOS()
+                FilePicker.platform
                     .pickFiles(
                       dialogTitle: 'Save TAS to:',
                       type: FileType.custom,
@@ -183,7 +196,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       }
 
                       tas = [];
-                      if (readTas) {
+                      if (readTas!) {
                         rootBundle
                             .loadString('tas/$filename.tas')
                             .then((final String file) {
@@ -205,7 +218,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   return;
                 }
                 tas = [];
-                if (readTas) {
+                if (readTas!) {
                   rootBundle
                       .loadString('tas/$filename.tas')
                       .then((final String file) {
@@ -481,6 +494,39 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    if (readTas == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Wizard vs Red Squares')),
+        body: Center(
+          child: Column(
+            children: [
+              OutlinedButton(
+                onPressed: () {
+                  readTas = false;
+                  start();
+                },
+                child: Text('Play normally'),
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  readTas = true;
+                  start();
+                },
+                child: Text('Play TAS'),
+              ),
+              if (Platform.version != 'web')
+                OutlinedButton(
+                  onPressed: () {
+                    writeTas = true;
+                    start();
+                  },
+                  child: Text('Write TAS'),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
     if (end) {
       return Scaffold(
         appBar: AppBar(title: Text('You Win!')),
