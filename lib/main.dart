@@ -172,8 +172,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           if (a == b) continue;
           a.y--;
           if (!world!.colliding(a, b)) {
-            a.y++;
-            continue;
+            a.y += 2;
+            if (!world!.colliding(a, b)) {
+              a.y--;
+              continue;
+            }
+            a.y -= 2;
           }
           a.y++;
           for (String tag in b.tags.where((e) => e.startsWith('goto='))) {
@@ -451,14 +455,24 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void downDown() {
-    if (!player!.tags.contains('float')) return;
-    if (!downPressed) {
-      if (!jumpPressed) {
-        player!.moveYvel = -speed;
-      } else {
-        player!.moveYvel = 0;
+    if (player!.tags.contains('float')) {
+      if (!downPressed) {
+        if (!jumpPressed) {
+          player!.moveYvel = -speed;
+        } else {
+          player!.moveYvel = 0;
+        }
+        downPressed = true;
       }
-      downPressed = true;
+    } else {
+      if (!jumped) {
+        player!.y++;
+        if (world!.colliders(player!).isNotEmpty) {
+          player!.baseYvel -= jumpVel;
+        }
+        player!.y--;
+        jumped = true;
+      }
     }
   }
 
@@ -583,7 +597,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           title: Text(world!.name),
           bottom: PreferredSize(
             preferredSize: Size.zero,
-            child: Text('${times.isEmpty ? Duration(milliseconds: 1000 ~/ 60) * tick : Duration(milliseconds: 1000 ~/ 60) * (tick + times.reduce((a, b) => a + b))} (${Duration(milliseconds: 1000 ~/ 60) * tick})'),
+            child: Text(
+              '${times.isEmpty ? Duration(milliseconds: 1000 ~/ 60) * tick : Duration(milliseconds: 1000 ~/ 60) * (tick + times.reduce((a, b) => a + b))} (${Duration(milliseconds: 1000 ~/ 60) * tick})',
+            ),
           ),
         ),
         body: Center(

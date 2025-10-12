@@ -110,7 +110,7 @@ class World {
             .firstOrNull;
         if (fire != null) {
           if (object.tags.contains('float')) {
-            if (fire.y > object.y + object.height) {
+            if (fire.y > object.y) {
               object.moveYvel = -2;
             } else {
               object.moveYvel = 2;
@@ -122,6 +122,14 @@ class World {
                 object.baseYvel += 15;
               }
               object.y++;
+            }
+            if (fire.y >= object.y) {
+              print('moo');
+              object.y++;
+              if (colliders(object).isNotEmpty) {
+                object.baseYvel -= 15;
+              }
+              object.y--;
             }
           }
           if (fire.x > object.x) {
@@ -145,6 +153,12 @@ class World {
                 object.baseYvel += 15;
               }
               object.y++;
+            } else if (player.y < object.y) {
+              object.y++;
+              if (colliders(object).isNotEmpty) {
+                object.baseYvel -= 15;
+              }
+              object.y--;
             }
           }
           if (player.x < object.x) {
