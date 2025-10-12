@@ -178,15 +178,15 @@ class World {
       if (colliders(object).isNotEmpty) {
         Iterable<Object?> currentColliders = colliders(object).toList();
         while (currentColliders.isNotEmpty) {
-          if (!currentColliders.any(
+          if (object.tags.contains('enemy') || !currentColliders.any(
             (e) => e?.tags.contains('enemy') ?? false,
           )) {
             object.y -= object.yvel.sign;
           }
-          for (Object? object in currentColliders) {
-            if (object?.tags.contains('enemy') ?? false) {
-              object!.height -= 1;
-              if (object.height == 0) deadObjects.add(object);
+          for (Object? object2 in currentColliders) {
+            if (!object.tags.contains('enemy') && (object2?.tags.contains('enemy') ?? false)) {
+              object2!.height -= 1;
+              if (object2.height == 0) deadObjects.add(object2);
             }
           }
           currentColliders = colliders(object).toList();
