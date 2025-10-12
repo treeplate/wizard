@@ -583,7 +583,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           title: Text(world!.name),
           bottom: PreferredSize(
             preferredSize: Size.zero,
-            child: Text('${Duration(milliseconds: 1000 ~/ 60) * tick}'),
+            child: Text('${times.isEmpty ? Duration(milliseconds: 1000 ~/ 60) * tick : Duration(milliseconds: 1000 ~/ 60) * (tick + times.reduce((a, b) => a + b))} (${Duration(milliseconds: 1000 ~/ 60) * tick})'),
           ),
         ),
         body: Center(
