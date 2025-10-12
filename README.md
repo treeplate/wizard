@@ -6,7 +6,7 @@ Written in Dart+Flutter, with a simple physics engine built from scratch.
 
 The game has two spells which you learn during the game, Fire, which shoots a small square that kills enemies, and Fly, which lets you fly around freely without gravity.
 
-This game also has TAS functionality, where you can write a frame-by-frame TAS in the built-in TAS editor, and then play it back.
+This game also has TAS functionality, where you can write a frame-by-frame TAS in the built-in TAS editor, and then play it back. This version comes bundled with TASes for l1-l4.
 
 ## TAS Creation
 In order to write a TAS for this game, you need to:
