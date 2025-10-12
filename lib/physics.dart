@@ -1,10 +1,10 @@
 import 'dart:ui' show Rect, Offset, Size;
 
 class Object {
-  double x;
-  double y;
-  double width;
-  double height;
+  int x;
+  int y;
+  int width;
+  int height;
   int baseXvel = 0;
   int baseYvel = 0;
   int moveXvel = 0;
@@ -13,7 +13,7 @@ class Object {
   int get yvel => baseYvel + moveYvel;
   final Set<String> tags;
 
-  Rect get asRect => Offset(x, y) & Size(width, height);
+  Rect get asRect => Offset(x.toDouble(), y.toDouble()) & Size(width.toDouble(), height.toDouble());
 
   Object.xywh(this.x, this.y, this.width, this.height, {required this.tags});
 }
@@ -56,21 +56,21 @@ class World {
       if (parts.length < 4) {
         throw FormatException('bad object (not enough spaces) - parts: $parts');
       }
-      double? x = double.tryParse(parts[0]);
+      int? x = int.tryParse(parts[0]);
       if (x == null) {
-        throw FormatException('invalid double for object x: ${parts[0]}');
+        throw FormatException('invalid int for object x: ${parts[0]}');
       }
-      double? y = double.tryParse(parts[1]);
+      int? y = int.tryParse(parts[1]);
       if (y == null) {
-        throw FormatException('invalid double for object y: ${parts[1]}');
+        throw FormatException('invalid int for object y: ${parts[1]}');
       }
-      double? width = double.tryParse(parts[2]);
+      int? width = int.tryParse(parts[2]);
       if (width == null) {
-        throw FormatException('invalid double for object width: ${parts[2]}');
+        throw FormatException('invalid int for object width: ${parts[2]}');
       }
-      double? height = double.tryParse(parts[3]);
+      int? height = int.tryParse(parts[3]);
       if (height == null) {
-        throw FormatException('invalid double for object height: ${parts[3]}');
+        throw FormatException('invalid int for object height: ${parts[3]}');
       }
       objects.add(
         Object.xywh(x, y, width, height, tags: parts.skip(4).toSet()),
@@ -200,6 +200,15 @@ class World {
           deadObjects.add(object);
           for (Object? collider in currentColliders) {
             if (collider?.tags.contains('enemy') ?? false) {
+              deadObjects.add(collider!);
+            }
+          }
+          continue;
+        }
+        if (object.tags.contains('key')) {
+          object.x -= object.xvel;
+          for (Object? collider in currentColliders) {
+            if (collider?.tags.contains('door') ?? false) {
               deadObjects.add(collider!);
             }
           }

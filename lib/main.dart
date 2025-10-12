@@ -25,6 +25,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late final Ticker ticker;
   final FocusNode focusNode = FocusNode();
   Object? player;
+  Object? carrying;
   int jumpVel = 20;
   int speed = 5;
   Map<String, Set<Object>> teleportedObjects = {
@@ -100,10 +101,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 jumpDown();
               case '1':
                 fire();
+              case '2':
+                if (player!.tags.contains('float')) {
+                  player!.tags.remove('float');
+                } else {
+                  player!.tags.add('float');
+                }
               case 'R':
                 restart();
+              case 't':
+                take();
             }
           }
+        }
+      }
+      if (player != null && carrying != null && world != null) {
+        carrying!.baseXvel = player!.xvel;
+        carrying!.baseYvel = player!.yvel;
+        int oldX = carrying!.x;
+        int oldY = carrying!.y;
+        carrying!.x = player!.x + 50;
+        carrying!.y = player!.y;
+        if (world!.colliders(carrying!).isNotEmpty) {
+          carrying!.x = oldX;
+          carrying!.y = oldY;
         }
       }
       world?.tick();
@@ -249,10 +270,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.digit2) {
-        if (world!.gravity == 0) {
-          world!.gravity = 1;
+        if (player!.tags.contains('float')) {
+          player!.tags.remove('float');
         } else {
-          world!.gravity = 0;
+          player!.tags.add('float');
         }
         return KeyEventResult.handled;
       }
@@ -274,6 +295,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         case PhysicalKeyboardKey.arrowLeft:
           leftDown();
           return KeyEventResult.handled;
+        case PhysicalKeyboardKey.keyE:
+        case PhysicalKeyboardKey.shiftRight:
+          take();
+          return KeyEventResult.handled;
       }
     } else {
       assert(event is KeyUpEvent);
@@ -294,6 +319,9 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
         case PhysicalKeyboardKey.keyA:
         case PhysicalKeyboardKey.arrowLeft:
           leftUp();
+          return KeyEventResult.handled;
+        case PhysicalKeyboardKey.keyE:
+        case PhysicalKeyboardKey.shiftRight:
           return KeyEventResult.handled;
       }
       return KeyEventResult.handled;
@@ -330,7 +358,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void jumpUp() {
-    if (world!.gravity != 0) return;
+    if (!player!.tags.contains('float')) return;
     if (jumpPressed) {
       if (downPressed) {
         player!.moveYvel = -speed;
@@ -342,7 +370,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void downUp() {
-    if (world!.gravity != 0) return;
+    if (!player!.tags.contains('float')) return;
     if (downPressed) {
       if (jumpPressed) {
         player!.moveYvel = speed;
@@ -376,7 +404,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void jumpDown() {
-    if (world!.gravity == 0) {
+    if (player!.tags.contains('float')) {
       if (!jumpPressed) {
         if (!downPressed) {
           player!.moveYvel = speed;
@@ -398,7 +426,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   }
 
   void downDown() {
-    if (world!.gravity != 0) return;
+    if (!player!.tags.contains('float')) return;
     if (!downPressed) {
       if (!jumpPressed) {
         player!.moveYvel = -speed;
@@ -431,6 +459,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     player!.height = 50;
     player!.tags.add('player');
     (teleportedObjects[filename] = {}).add(player!);
+  }
+
+  void take() {
+    if (carrying != null) {
+      carrying = null;
+      return;
+    }
+    player!.x += player!.width;
+    Object? key = world!
+        .colliders(player!)
+        .where((e) => e!.tags.contains('key'))
+        .firstOrNull;
+    carrying = key;
+    player!.x -= player!.width;
   }
 
   FocusNode textField1FocusNode = FocusNode();
@@ -485,17 +527,21 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                   children: [
                     ...world!.objects.map(
                       (e) => Positioned(
-                        bottom: e.y,
-                        left: e.x,
+                        bottom: e.y.toDouble(),
+                        left: e.x.toDouble(),
                         child: Container(
                           color: e.tags.any((e) => e.startsWith('goto='))
                               ? Colors.green
                               : e.tags.contains('enemy') ||
                                     e.tags.contains('fire')
                               ? Colors.red
+                              : e.tags.contains('key')
+                              ? Colors.yellow
+                              : e.tags.contains('door')
+                              ? Colors.brown
                               : Colors.white,
-                          width: e.width,
-                          height: e.height,
+                          width: e.width.toDouble(),
+                          height: e.height.toDouble(),
                         ),
                       ),
                     ),

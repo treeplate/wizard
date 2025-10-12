@@ -1,0 +1,9 @@
+1000 1000 Press E (> for dvorak) to pick up a yellow key, and bring it to a brown door.
+600 0 25 500
+500 0 25 25 key
+100 500 525 25
+600 525 25 100 door
+500 525 50 50 enemy
+400 525 50 50 enemy
+600 625 25 375
+900 0 100 150 goto=end
