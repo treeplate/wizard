@@ -176,7 +176,7 @@ class World {
       }
       object.y += object.yvel;
       if (colliders(object).isNotEmpty) {
-        Iterable<Object?> currentColliders = colliders(object);
+        Iterable<Object?> currentColliders = colliders(object).toList();
         while (currentColliders.isNotEmpty) {
           if (!currentColliders.any(
             (e) => e?.tags.contains('enemy') ?? false,
@@ -189,6 +189,7 @@ class World {
               if (object.height == 0) deadObjects.add(object);
             }
           }
+          currentColliders = colliders(object).toList();
         }
         object.baseYvel = 0;
       }
