@@ -42,6 +42,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   int startingBYVel = 0;
   bool startingLeftPressed = false;
   bool startingRightPressed = false;
+  bool startingJumpPressed = false;
+  bool startingDownPressed = false;
   int tick = 0;
   List<int> times = [];
   bool end = false;
@@ -73,6 +75,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   void tickTo(int goal) {
     assert(!readTas! || tas != null);
     while (tick < goal) {
+      doTick(Duration(milliseconds: 1000 ~/ 60));
+    }
+  }
+
+  void tickToEnd() {
+    String oldFilename = filename;
+    assert(!readTas! || tas != null);
+    while (filename == oldFilename) {
       doTick(Duration(milliseconds: 1000 ~/ 60));
     }
   }
@@ -246,6 +256,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               startingMYVel = player!.moveYvel;
               startingLeftPressed = leftPressed;
               startingRightPressed = rightPressed;
+              startingJumpPressed = jumpPressed;
+              startingDownPressed = downPressed;
               rootBundle.loadString('levels/$nextLevel').then((
                 final String file,
               ) {
@@ -471,6 +483,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
     player!.y = 0;
     player!.height = 50;
     player!.tags.add('player');
+    player!.tags.remove('float');
     (teleportedObjects[filename] = {}).add(player!);
   }
 
@@ -517,10 +530,24 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               if (Platform.version != 'web')
                 OutlinedButton(
                   onPressed: () {
+                    readTas = false;
                     writeTas = true;
-                    start();
+                    setState(() {
+                      start();
+                    });
                   },
                   child: Text('Write TAS'),
+                ),
+              if (Platform.version != 'web')
+                OutlinedButton(
+                  onPressed: () {
+                    readTas = true;
+                    writeTas = true;
+                    setState(() {
+                      start();
+                    });
+                  },
+                  child: Text('Edit TAS'),
                 ),
             ],
           ),
@@ -636,11 +663,21 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                   player!.baseYvel = startingBYVel;
                                   leftPressed = startingLeftPressed;
                                   rightPressed = startingRightPressed;
+                                  jumpPressed = startingJumpPressed;
+                                  downPressed = startingDownPressed;
                                 }
                                 tickTo(goal);
                               });
                             },
                             child: Text('Go to tick'),
+                          ),
+                          OutlinedButton(
+                            onPressed: () {
+                              setState(() {
+                                tickToEnd();
+                              });
+                            },
+                            child: Text('Next Level'),
                           ),
                         ],
                       )
