@@ -191,7 +191,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               world = null;
               filename = nextLevel;
               if (writeTas) {
-                FilePicker.platform
+                FilePicker
                     .pickFiles(
                       dialogTitle: 'Save TAS to:',
                       type: FileType.custom,
